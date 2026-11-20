@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>HP 37900D · 内部档案库</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23ffb000'/%3E%3Ctext x='16' y='24' font-family='monospace' font-size='21' font-weight='700' text-anchor='middle' fill='%230b0702'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="faceplate">
+  <span class="fp-model">HP 37900D</span>
+  <span class="fp-sub">CLASSIFIED ARCHIVE</span>
+  <span class="fp-right">
+    <span class="fp-item">SN 37900D-0421</span>
+    <span class="fp-item">FW 2.14</span>
+    <span class="fp-led" aria-hidden="true"></span>
+    <span class="fp-item">PWR</span>
+  </span>
+</div>
+
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-text">
+        <h1><span class="h1-mark">//</span> 内部档案库 <span class="h1-tag">[ARCHIVE_DB]</span></h1>
+        <p class="conn" id="conn"><span class="dot"></span><span id="connText">TAPE_DRIVE: MOUNTING…</span></p>
+      </div>
+    </div>
+    <div class="clearance" id="clearance">
+      <span class="clr-k">CLEARANCE</span>
+      <span class="clr-v">FULL ACCESS</span>
+      <span class="clr-tag">[GRANTED]</span>
+      <button type="button" id="logoutBtn" class="link clr-out" hidden>退出</button>
+    </div>
+  </header>
+
+  <div id="appView" hidden>
+
+    <section class="composer" id="composer" hidden>
+      <div class="tabs" role="tablist" aria-label="档案分类">
+        <button class="tab is-on" data-type="world" role="tab" aria-selected="true">组织</button>
+        <button class="tab" data-type="character" role="tab" aria-selected="false">人员信息</button>
+        <button class="tab" data-type="incident" role="tab" aria-selected="false">绝密事件</button>
+      </div>
+
+      <div class="replybar" id="replyBar" hidden>
+        <span>回复 <b id="replyName"></b>：<span class="reply-snippet" id="replySnippet"></span></span>
+        <button type="button" id="replyCancel" class="link">取消</button>
+      </div>
+
+      <div class="replybar editbar" id="editBar" hidden>
+        <span>正在改写 <input id="editCodeInput" class="code-input" maxlength="24" spellcheck="false" aria-label="档案编号">　<span class="edit-note">编号可改写</span></span>
+        <button type="button" id="editCancel" class="link">取消改写</button>
+      </div>
+
+      <input id="titleInput" class="input title-input" maxlength="80" placeholder="档案标题" spellcheck="false">
+
+      <textarea id="bodyInput" rows="3" maxlength="5000" placeholder="档案正文…（Ctrl + Enter 归档；用 [[双括号]] 标出需要涂黑的内容）"></textarea>
+
+      <div class="composer-foot">
+        <span class="hint" id="charHint">0 / 5000</span>
+        <button id="sendBtn" class="primary" type="button">归档</button>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <div class="filters" id="filters" role="group" aria-label="筛选">
+        <button class="chip is-on" data-filter="all">全部</button>
+        <button class="chip" data-filter="world">组织</button>
+        <button class="chip" data-filter="character">人员信息</button>
+        <button class="chip" data-filter="incident">绝密事件</button>
+      </div>
+      <input id="search" class="search" type="search" placeholder="检索标题、正文或编号" spellcheck="false">
+      <button id="orderBtn" class="ghost" type="button" title="点击切换排序">排序: 档案编号 ↑</button>
+    </section>
+
+    <p class="stats" id="stats"></p>
+
+    <main id="feed" class="feed" aria-live="polite"></main>
+    <p id="empty" class="empty" hidden>ARCHIVE EMPTY.</p>
+  </div>
+</div>
+
+<footer class="statusbar">
+  <span class="sb-left">ARCHIVE_DB v1.00 · ENCRYPTION AES-74 · LEVEL-3 ACCESS</span>
+  <span class="sb-right"><span id="sbState">STANDBY</span></span>
+</footer>
+
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <p class="gate-warn">WARNING: CLASSIFIED ARCHIVE</p>
+    <h2 class="gate-title">// 内部档案库</h2>
+    <p class="gate-line">该终端接入受限信道。以下内容属 Level-3 保密范围，仅限持钥者查阅。</p>
+    <p class="gate-line">继续操作即视为已知悉并同意保密条款。</p>
+
+    <form id="gateForm" novalidate>
+      <label class="field">
+        <span>ACCESS KEY</span>
+        <input id="gateKey" value="USER-1970" spellcheck="false" autocomplete="off"
+               autocapitalize="off" aria-label="访问密钥">
+      </label>
+      <button class="primary block" id="gateBtn" type="submit">[ 接入终端 / ACCESS ]</button>
+    </form>
+
+    <p class="gate-status" id="gateStatus"></p>
+  </div>
+</div>
+
+<button id="jumpTop" class="jump" type="button" hidden>有新档案 ↑</button>
+<div id="toast" class="toast" hidden></div>
+
+<div class="gate" id="login" hidden>
+  <div class="gate-box">
+    <p class="gate-warn" id="loginWarn">SELECT ACCESS MODE</p>
+    <h2 class="gate-title" id="loginTitle">// 选择接入方式</h2>
+    <p class="gate-line" id="loginHint">管理员可录入与改写档案。访客只能阅读。</p>
+
+    <div class="mode-choice" id="modeChoice">
+      <button class="primary block" id="modeAdmin" type="button">[ 管理员登录 / MANAGER ]</button>
+      <button class="ghost block" id="modeGuest" type="button">[ 访客阅读 / READ-ONLY ]</button>
+    </div>
+
+    <form id="loginForm" novalidate hidden>
+      <label class="field">
+        <span>PASSPHRASE</span>
+        <input id="loginPass" type="password" autocomplete="current-password" spellcheck="false"
+               aria-label="管理口令">
+      </label>
+      <button class="primary block" id="loginBtn" type="submit">[ 验证 / AUTHENTICATE ]</button>
+      <button type="button" id="loginBack" class="link block-link">← 返回选择</button>
+    </form>
+
+    <p class="gate-status" id="loginStatus"></p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
