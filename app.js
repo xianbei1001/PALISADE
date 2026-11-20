@@ -547,6 +547,12 @@ async function send() {
 }
 
 feed.addEventListener('click', async (event) => {
+  const red = event.target.closest('.redacted');
+  if (red) {
+    red.classList.toggle('is-open');
+    return;
+  }
+
   const btn = event.target.closest('[data-act]');
   if (!btn) return;
 
@@ -580,6 +586,14 @@ feed.addEventListener('click', async (event) => {
       toast(err.message);
     }
   }
+});
+
+feed.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const red = event.target.closest('.redacted');
+  if (!red) return;
+  event.preventDefault();
+  red.classList.toggle('is-open');
 });
 
 document.querySelectorAll('.tab').forEach((tab) => {

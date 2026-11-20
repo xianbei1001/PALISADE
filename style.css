@@ -828,26 +828,18 @@ textarea {
   color: #ffc44d;
 }
 
-/* 涂黑：默认被琥珀色块盖住，hover / 点击 / 键盘聚焦时显形 */
+/* 涂黑：默认被琥珀色块盖住，点击（或键盘聚焦）才显形；鼠标划过不触发 */
 .redacted {
   background: var(--text);
   color: var(--text);
-  cursor: help;
+  cursor: pointer;
   text-shadow: none;
   transition: background-color 0.16s ease, color 0.16s ease;
 }
 
-.redacted:hover,
-.redacted:focus,
 .redacted.is-open {
   background: var(--field);
   color: var(--bright);
-}
-
-@media (hover: none) {
-  .redacted {
-    cursor: pointer;
-  }
 }
 
 .quote {
