@@ -31,6 +31,8 @@ const state = {
   admin: false,
   wantAdmin: false,
   realtime: true,
+  expanded: new Set(), // 已展开全文的消息 id，重建 DOM 后要还原
+  opened: new Set(),   // 已点开的涂黑块 key（消息 id:序号）
 };
 
 let stream = null;
@@ -285,17 +287,24 @@ function quoteHtml(m) {
   return '<div class="quote"><b>' + esc(src.author) + '</b>：' + esc(text.slice(0, 80)) + '</div>';
 }
 
-function bodyHtml(text) {
+function bodyHtml(text, mid) {
+  let n = 0;
   const markup = (chunk) =>
-    esc(chunk).replace(/\[\[([^\[\]]+)\]\]/g, '<span class="redacted" tabindex="0">$1</span>');
+    esc(chunk).replace(/\[\[([^\[\]]+)\]\]/g, (all, inner) => {
+      const k = mid + ':' + n++;
+      const open = state.opened.has(k) ? ' is-open' : '';
+      return '<span class="redacted' + open + '" tabindex="0" data-k="' + k + '">' + inner + '</span>';
+    });
 
   if (text.length <= BODY_LIMIT) return '<p class="body">' + markup(text) + '</p>';
-  const id = 'rest-' + Math.random().toString(36).slice(2, 9);
+
+  const open = state.expanded.has(mid);
+  const id = 'rest-' + mid;
   return (
     '<p class="body">' +
       markup(text.slice(0, BODY_LIMIT)) + '…' +
-      '<span id="' + id + '" hidden>' + markup(text.slice(BODY_LIMIT)) + '</span> ' +
-      '<button class="link" data-act="expand" data-target="' + id + '">展开全文</button>' +
+      '<span id="' + id + '"' + (open ? '' : ' hidden') + '>' + markup(text.slice(BODY_LIMIT)) + '</span> ' +
+      (open ? '' : '<button class="link" data-act="expand" data-target="' + id + '">展开全文</button>') +
     '</p>'
   );
 }
@@ -319,7 +328,7 @@ function messageHtml(m) {
           '<span class="badge ' + t.cls + '">' + t.label + '</span>' +
         '</div>' +
         '<h3 class="title">' + esc(m.title) + '</h3>' +
-        bodyHtml(m.body) +
+        bodyHtml(m.body, m.id) +
         quoteHtml(m) +
         (actions.length ? '<div class="actions">' + actions.join('') + '</div>' : '') +
       '</div>' +
@@ -398,6 +407,23 @@ async function sync() {
     const data = await api('GET', '/api/messages');
     const next = new Map();
     for (const m of data.messages) next.set(m.id, m);
+
+    // 数据没变就不重建 DOM：否则展开全文、涂黑展开的状态每隔几秒就被冲掉
+    let changed = next.size !== state.messages.size;
+    if (!changed) {
+      for (const [id, m] of next) {
+        const prev = state.messages.get(id);
+        if (!prev || prev.updatedAt !== m.updatedAt) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed) {
+      setConn(true);
+      return;
+    }
+
     state.messages = next;
     if (state.replyTo && !next.has(state.replyTo)) setReply(null);
     render();
@@ -550,6 +576,11 @@ feed.addEventListener('click', async (event) => {
   const red = event.target.closest('.redacted');
   if (red) {
     red.classList.toggle('is-open');
+    const k = red.dataset.k;
+    if (k) {
+      if (red.classList.contains('is-open')) state.opened.add(k);
+      else state.opened.delete(k);
+    }
     return;
   }
 
@@ -564,6 +595,7 @@ feed.addEventListener('click', async (event) => {
     const rest = document.getElementById(btn.dataset.target);
     if (rest) rest.hidden = false;
     btn.hidden = true;
+    if (id) state.expanded.add(id);
     return;
   }
 
@@ -594,6 +626,11 @@ feed.addEventListener('keydown', (event) => {
   if (!red) return;
   event.preventDefault();
   red.classList.toggle('is-open');
+  const k = red.dataset.k;
+  if (k) {
+    if (red.classList.contains('is-open')) state.opened.add(k);
+    else state.opened.delete(k);
+  }
 });
 
 document.querySelectorAll('.tab').forEach((tab) => {
